@@ -4,68 +4,57 @@ bleep.py — цензор повідомлень
 
 Використання:
     python bleep.py banned.txt
-де banned.txt — текстовий файл з одним забороненим словом на рядок.
 """
 
 import sys
+from typing import Set   # для сумісності з Python 3.7
 
-USAGE_MSG = "Usage: python bleep.py dictionary"
+USAGE = "Usage: python bleep.py dictionary"
 
 
-def load_banned_words(path: str) -> set[str]:
-    """
-    Повертає множину слів (у нижньому регістрі), прочитаних з файлу `path`.
-    У кожному рядку файлу — рівно одне слово.
-    """
+# ----------------------------------------------------------------------
+# Читання словника
+# ----------------------------------------------------------------------
+def load_banned_words(path: str) -> Set[str]:
+    """Повертає множину заборонених слів (у нижньому регістрі)."""
     banned = set()
-    with open(path, "r", encoding="utf-8") as file:
-        for line in file:
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
             banned.add(line.strip().lower())
     return banned
 
 
-def censor_message(message: str, banned: set[str]) -> str:
-    """
-    Замінює кожне слово з `banned` на той самий набір зірочок.
-    Порівняння виконується без урахування регістру.
-    """
-    censored_tokens = []
+# ----------------------------------------------------------------------
+# Цензура повідомлення
+# ----------------------------------------------------------------------
+def censor(message: str, banned: Set[str]) -> str:
+    """Замінює кожне заборонене слово на зірочки, зберігаючи решту тексту."""
+    censored = []
     for token in message.split():
-        if token.lower() in banned:
-            censored_tokens.append("*" * len(token))
-        else:
-            censored_tokens.append(token)
-    return " ".join(censored_tokens)
+        censored.append("*" * len(token) if token.lower() in banned else token)
+    return " ".join(censored)
 
 
+# ----------------------------------------------------------------------
+# Головна логіка
+# ----------------------------------------------------------------------
 def main() -> None:
-    # ------------------------------------------------------------
-    # 1. Перевірка аргументів командного рядка
-    # ------------------------------------------------------------
+    # перевірка аргументів
     if len(sys.argv) != 2:
-        print(USAGE_MSG)
+        print(USAGE)
         sys.exit(1)
 
-    dictionary_path = sys.argv[1]
-
-    # ------------------------------------------------------------
-    # 2. Завантаження списку заборонених слів
-    # ------------------------------------------------------------
     try:
-        banned_words = load_banned_words(dictionary_path)
+        banned_words = load_banned_words(sys.argv[1])
     except FileNotFoundError:
-        print(f"Could not open {dictionary_path}")
+        print(f"Could not open {sys.argv[1]}")
         sys.exit(1)
 
-    # ------------------------------------------------------------
-    # 3. Запитуємо повідомлення в користувача
-    # ------------------------------------------------------------
+    # запит повідомлення
     message = input("What message would you like to censor?\n")
 
-    # ------------------------------------------------------------
-    # 4. Виводимо зацензуроване повідомлення
-    # ------------------------------------------------------------
-    print(censor_message(message, banned_words))
+    # вивід результату
+    print(censor(message, banned_words))
 
 
 if __name__ == "__main__":
